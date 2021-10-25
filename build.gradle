@@ -31,6 +31,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    exclude 'com/dynatrace/oss/**/*$*/**'
 }
 
 wrapper {
