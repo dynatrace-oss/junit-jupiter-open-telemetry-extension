@@ -1,8 +1,10 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
-group 'org.example'
+group 'com.dynatrace.oss.opentelemetry'
+
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -33,6 +35,28 @@ test {
     useJUnitPlatform()
     exclude 'com/dynatrace/oss/**/*$*/**'
 }
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = 'junit.jupiter.exporter'
+            version = '1.1'
+
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/dynatrace-oss/junit-jupiter-open-telemetry-extension"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
 
 wrapper {
     gradleVersion = '7.2'
