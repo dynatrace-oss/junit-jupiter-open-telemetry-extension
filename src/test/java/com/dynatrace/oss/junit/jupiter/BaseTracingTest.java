@@ -13,8 +13,6 @@
  */
 package com.dynatrace.oss.junit.jupiter;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
@@ -40,18 +38,12 @@ public class BaseTracingTest {
 
 	protected static OpenTelemetry getOpenTelemetry() {
 		if(telemetry == null) {
-
-			String exportHost = System.getProperty("exporter-host", "ep-otel-collector-endpoint.apps.lab.dynatrace.org");
-			String exportPort = System.getProperty("exporter-port", "4317");
-			ManagedChannel channel =
-					ManagedChannelBuilder.forAddress(exportHost, Integer.parseInt(exportPort)).usePlaintext().build();
-			OtlpGrpcSpanExporter otlpGrpcSpanExporter =
-					OtlpGrpcSpanExporter
-							.builder()
-							.setChannel(channel)
-							.setTimeout(30, TimeUnit.SECONDS)
-
-							.build();
+            OtlpGrpcSpanExporter otlpGrpcSpanExporter =
+                OtlpGrpcSpanExporter
+                    .builder()
+                    .setEndpoint(getExporterEndpoint())
+                    .setTimeout(30, TimeUnit.SECONDS)
+    				.build();
 
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> otlpGrpcSpanExporter.flush()));
 
@@ -62,7 +54,6 @@ public class BaseTracingTest {
 					.addSpanProcessor(SimpleSpanProcessor.create(otlpGrpcSpanExporter))
 					.addSpanProcessor(SimpleSpanProcessor.create(exporter))
 					.setResource(Resource.getDefault().merge(serviceNameResource))
-
 					.build();
 
 			telemetry = OpenTelemetrySdk.builder()
@@ -75,6 +66,11 @@ public class BaseTracingTest {
 		return  telemetry;
 	}
 
+    private static String getExporterEndpoint() {
+        return System.getProperty("exporter-scheme", "http")
+            + "://" + System.getProperty("exporter-host", "localhost")
+            + ":" + System.getProperty("exporter-port", "4317");
+    }
 
 	@BeforeEach
 	public void resetExporter() {
